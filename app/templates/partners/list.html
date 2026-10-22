@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Partners · Car Rental Operations{% endblock %}
+{% block content %}
+<div class="page-heading"><div><p class="eyebrow">Partner management</p><h1>Partners</h1><p class="muted">Owners and businesses supplying vehicles.</p></div><a class="button" href="{{ url_for('main.partner_create') }}">Add partner</a></div>
+<section class="panel">
+{% if partners %}<div class="table-wrap"><table><thead><tr><th>Partner</th><th>Contact</th><th>Vehicles</th><th>Agreement terms</th><th>Status</th><th></th></tr></thead><tbody>
+{% for partner in partners %}<tr>
+  <td><a href="{{ url_for('main.partner_detail', partner_id=partner.id) }}"><strong>{{ partner.business_name or partner.name }}</strong></a>{% if partner.business_name %}<br><span class="muted">{{ partner.name }}</span>{% endif %}</td>
+  <td>{{ partner.email or '—' }}{% if partner.phone %}<br>{{ partner.phone }}{% endif %}</td>
+  <td>{{ partner.vehicles|length }}</td>
+  <td>{{ partner.agreements|length }} recorded</td>
+  <td><span class="badge {{ 'good' if partner.is_active else 'archived' }}">{{ 'Active' if partner.is_active else 'Archived' }}</span></td>
+  <td><a href="{{ url_for('main.partner_edit', partner_id=partner.id) }}">Edit</a></td>
+</tr>{% endfor %}
+</tbody></table></div>
+{% else %}<div class="empty"><h2>No partners yet</h2><p>Add an external vehicle owner or partner business.</p><a class="button" href="{{ url_for('main.partner_create') }}">Add partner</a></div>{% endif %}
+</section>
+{% endblock %}

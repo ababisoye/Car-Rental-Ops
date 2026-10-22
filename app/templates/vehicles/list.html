@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Fleet · Car Rental Operations{% endblock %}
+{% block content %}
+<div class="page-heading"><div><p class="eyebrow">Fleet management</p><h1>Vehicles</h1><p class="muted">Search, filter, and maintain your vehicle records.</p></div><a class="button" href="{{ url_for('main.vehicle_create') }}">Add vehicle</a></div>
+<section class="panel">
+  <form class="filter-bar" method="get" action="{{ url_for('main.vehicle_list') }}">
+    <div class="field search"><label for="q">Search vehicles</label><input id="q" name="q" value="{{ request.args.get('q', '') }}" placeholder="ID, registration, make, partner"></div>
+    <div class="field"><label for="ownership">Ownership</label><select id="ownership" name="ownership"><option value="">All ownership</option><option value="company_owned" {{ 'selected' if request.args.get('ownership') == 'company_owned' }}>Company owned</option><option value="partner_owned" {{ 'selected' if request.args.get('ownership') == 'partner_owned' }}>Partner owned</option></select></div>
+    <div class="field"><label for="status">Operational status</label><select id="status" name="status"><option value="">All statuses</option><option value="operational" {{ 'selected' if request.args.get('status') == 'operational' }}>Operational</option><option value="maintenance" {{ 'selected' if request.args.get('status') == 'maintenance' }}>Maintenance</option><option value="retired" {{ 'selected' if request.args.get('status') == 'retired' }}>Retired</option></select></div>
+    <div class="field"><label for="partner">Partner</label><select id="partner" name="partner"><option value="">All partners</option>{% for partner in partners %}<option value="{{ partner.id }}" {{ 'selected' if request.args.get('partner') == partner.id|string }}>{{ partner.business_name or partner.name }}</option>{% endfor %}</select></div>
+    {% if request.args.get('archived') == '1' %}<input type="hidden" name="archived" value="1">{% endif %}
+    <button class="button" type="submit">Apply filters</button>
+    {% if request.args %}<a class="button secondary" href="{{ url_for('main.vehicle_list') }}">Clear</a>{% endif %}
+  </form>
+  <p><a href="{{ url_for('main.vehicle_list', archived='1') }}">{{ 'Hide archived vehicles' if request.args.get('archived') == '1' else 'Show archived vehicles' }}</a></p>
+  {% if vehicles.items %}
+  <div class="table-wrap"><table><thead><tr><th>Vehicle</th><th>Registration</th><th>Ownership</th><th>Partner</th><th>Daily rate</th><th>Status</th><th></th></tr></thead><tbody>
+  {% for vehicle in vehicles.items %}<tr>
+    <td><a href="{{ url_for('main.vehicle_detail', vehicle_id=vehicle.id) }}"><strong>{{ vehicle.make }} {{ vehicle.model }}</strong></a><br><span class="muted">{{ vehicle.internal_id }} · {{ vehicle.year }}</span></td>
+    <td>{{ vehicle.registration_number }}</td><td>{{ vehicle.ownership_type|replace('_', ' ')|title }}</td>
+    <td>{{ (vehicle.partner.business_name or vehicle.partner.name) if vehicle.partner else '—' }}</td>
+    <td>{{ '₦{:,.2f}'.format(vehicle.daily_rate) if vehicle.daily_rate is not none else 'Not set' }}</td>
+    <td><span class="badge {{ 'good' if vehicle.operational_status == 'operational' else 'warn' if vehicle.operational_status == 'maintenance' else '' }}">{{ vehicle.operational_status|replace('_', ' ')|title }}</span> {% if vehicle.is_archived %}<span class="badge archived">Archived</span>{% endif %}</td>
+    <td><a href="{{ url_for('main.vehicle_edit', vehicle_id=vehicle.id) }}">Edit</a></td>
+  </tr>{% endfor %}
+  </tbody></table></div>
+  <div class="pagination"><span class="muted">Page {{ vehicles.page }} of {{ vehicles.pages or 1 }} · {{ vehicles.total }} vehicles</span><span>{% if vehicles.has_prev %}<a href="{{ url_for('main.vehicle_list', page=vehicles.prev_num, q=request.args.get('q', ''), ownership=request.args.get('ownership', ''), status=request.args.get('status', ''), partner=request.args.get('partner', ''), archived=request.args.get('archived', '')) }}">Previous</a>{% endif %} {% if vehicles.has_next %}<a href="{{ url_for('main.vehicle_list', page=vehicles.next_num, q=request.args.get('q', ''), ownership=request.args.get('ownership', ''), status=request.args.get('status', ''), partner=request.args.get('partner', ''), archived=request.args.get('archived', '')) }}">Next</a>{% endif %}</span></div>
+  {% else %}<div class="empty"><h2>No vehicles found</h2><p>{% if request.args %}Try changing your search or filters.{% else %}Add your first vehicle to begin managing the fleet.{% endif %}</p><a class="button" href="{{ url_for('main.vehicle_create') }}">Add vehicle</a></div>{% endif %}
+</section>
+{% endblock %}

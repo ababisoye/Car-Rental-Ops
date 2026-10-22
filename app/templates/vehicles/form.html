@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} · Car Rental Operations{% endblock %}
+{% block content %}
+<div class="page-heading"><div><p class="eyebrow">Fleet management</p><h1>{{ title }}</h1></div><a class="button secondary" href="{{ url_for('main.vehicle_list') }}">Back to fleet</a></div>
+<section class="panel"><form method="post" novalidate>{{ form.hidden_tag() }}{% if form.errors.get('csrf_token') %}<p class="flash error" role="alert">Form security check failed. Reload this page and try again.</p>{% endif %}
+  <div class="form-grid">
+  {% for field in [form.internal_id, form.registration_number, form.make, form.model, form.year, form.color, form.transmission, form.fuel_type, form.ownership_type, form.partner_id, form.daily_rate, form.operational_status, form.notes] %}
+    <div class="field {{ 'full' if field.name == 'notes' else '' }}"><label for="{{ field.id }}">{{ field.label.text }}{% if field.flags.required %} <span aria-label="required">*</span>{% endif %}</label>{{ field(placeholder='e.g. VEH-001' if field.name == 'internal_id' else ('150000.00' if field.name == 'daily_rate' else '')) }}{% if field.name == 'daily_rate' %}<small class="muted">Enter digits only, such as 150000. It will display as ₦150,000.00.</small>{% endif %}{% if field.errors %}<ul class="errors">{% for error in field.errors %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}</div>
+  {% endfor %}
+  </div>
+  <p class="muted">For partner-owned vehicles, select the partner. Enter the standard rental rate as a positive number in Nigerian naira (₦). For example, enter 150000 for ₦150,000.00 per day. A vehicle needs a recorded rate before it can be booked.</p>
+  <div class="form-actions">{{ form.submit(class_='button') }}<a class="button secondary" href="{{ url_for('main.vehicle_list') }}">Cancel</a></div>
+</form></section>
+{% endblock %}

@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Car Rental Operations{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="{{ url_for('main.index') }}">Car Rental Operations</a>
+      <nav aria-label="Main navigation">
+        <a href="{{ url_for('main.index') }}">Dashboard</a>
+        <a href="{{ url_for('main.vehicle_list') }}">Fleet</a>
+        <a href="{{ url_for('main.partner_list') }}">Partners</a>
+        <a href="{{ url_for('main.customer_list') }}">Customers</a>
+        <a href="{{ url_for('main.booking_list') }}">Bookings</a>
+        <a href="{{ url_for('main.expense_list') }}">Expenses</a>
+        <a href="{{ url_for('main.settlement_list') }}">Settlements</a>
+        <a href="{{ url_for('main.reports') }}">Reports</a>
+      </nav>
+    </div>
+  </header>
+  <main>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}<ul class="flash-list" role="status">{% for category, message in messages %}<li class="flash {{ category }}">{{ message }}</li>{% endfor %}</ul>{% endif %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+    <footer>Local operations workspace · Data is stored in the project’s SQLite database.</footer>
+  </main>
+</body>
+</html>

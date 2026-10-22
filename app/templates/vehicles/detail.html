@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}{{ vehicle.internal_id }} · Car Rental Operations{% endblock %}
+{% block content %}
+<div class="page-heading"><div><p class="eyebrow">Vehicle record</p><h1>{{ vehicle.make }} {{ vehicle.model }}</h1><p class="muted">{{ vehicle.internal_id }} · {{ vehicle.registration_number }}</p></div><div class="actions"><a class="button" href="{{ url_for('main.vehicle_edit', vehicle_id=vehicle.id) }}">Edit vehicle</a><a class="button secondary" href="{{ url_for('main.vehicle_list') }}">Back to fleet</a></div></div>
+<section class="panel"><div class="details">
+  <div><span class="detail-label">Ownership</span><span class="detail-value">{{ vehicle.ownership_type|replace('_', ' ')|title }}</span></div>
+  <div><span class="detail-label">Partner</span><span class="detail-value">{% if vehicle.partner %}<a href="{{ url_for('main.partner_detail', partner_id=vehicle.partner.id) }}">{{ vehicle.partner.business_name or vehicle.partner.name }}</a>{% else %}Company owned{% endif %}</span></div>
+  <div><span class="detail-label">Year and color</span><span class="detail-value">{{ vehicle.year }}{% if vehicle.color %} · {{ vehicle.color }}{% endif %}</span></div>
+  <div><span class="detail-label">Transmission / fuel</span><span class="detail-value">{{ (vehicle.transmission or 'Not specified')|title }} / {{ (vehicle.fuel_type or 'Not specified')|title }}</span></div>
+  <div><span class="detail-label">Default daily rate</span><span class="detail-value">{{ '₦{:,.2f}'.format(vehicle.daily_rate) if vehicle.daily_rate is not none else 'Not set — enter an agreed rate before booking' }}</span></div>
+  <div><span class="detail-label">Operational status</span><span class="badge">{{ vehicle.operational_status|replace('_', ' ')|title }}</span> {% if vehicle.is_archived %}<span class="badge archived">Archived</span>{% endif %}</div>
+  <div><span class="detail-label">Created</span><span class="detail-value">{{ vehicle.created_at.strftime('%Y-%m-%d %H:%M UTC') }}</span></div>
+  <div><span class="detail-label">Last updated</span><span class="detail-value">{{ vehicle.updated_at.strftime('%Y-%m-%d %H:%M UTC') }}</span></div>
+  {% if vehicle.notes %}<div class="field full"><span class="detail-label">Notes</span><span class="detail-value">{{ vehicle.notes }}</span></div>{% endif %}
+</div></section>
+<section class="panel"><h2>Record history</h2><p class="muted">Archiving preserves this vehicle and its future booking and financial history.</p>
+{% if vehicle.is_archived %}<form method="post" action="{{ url_for('main.vehicle_restore', vehicle_id=vehicle.id) }}">{{ confirm_form.hidden_tag() }}<button class="button" type="submit">Restore vehicle</button></form>
+{% else %}<form method="post" action="{{ url_for('main.vehicle_archive', vehicle_id=vehicle.id) }}" onsubmit="return confirm('Archive this vehicle? It will no longer be offered in the active fleet.');">{{ confirm_form.hidden_tag() }}<button class="button danger" type="submit">Archive vehicle</button></form>{% endif %}
+</section>
+<section class="panel"><div class="page-heading"><h2>Operating expenses</h2><a class="button small" href="{{ url_for('main.expense_create', vehicle_id=vehicle.id) }}">Record expense</a></div>
+{% if vehicle.expenses %}<div class="table-wrap"><table><thead><tr><th>Date</th><th>Category</th><th>Amount</th><th>Recorded method</th><th>Reference</th></tr></thead><tbody>{% for expense in vehicle.expenses %}<tr><td>{{ expense.incurred_at|localdatetime }} (Africa/Lagos)</td><td>{{ expense.category|title }}</td><td>₦{{ '{:,.2f}'.format(expense.amount) }}</td><td>{{ expense.payment_method|replace('_', ' ')|title }}</td><td>{{ expense.reference or '—' }}</td></tr>{% endfor %}</tbody></table></div>{% else %}<p class="muted">No operating expenses recorded for this vehicle.</p>{% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} · Car Rental Operations{% endblock %}
+{% block content %}
+<div class="page-heading"><div><p class="eyebrow">Customer management</p><h1>{{ title }}</h1></div><a class="button secondary" href="{{ url_for('main.customer_list') }}">Back to customers</a></div>
+<section class="panel"><form method="post" novalidate>{{ form.hidden_tag() }}{% if form.errors.get('csrf_token') %}<p class="flash error" role="alert">Form security check failed. Reload this page and try again.</p>{% endif %}<div class="form-grid">
+{% for field in [form.name, form.email, form.phone, form.address, form.notes] %}<div class="field {{ 'full' if field.name in ['address', 'notes'] else '' }}"><label for="{{ field.id }}">{{ field.label.text }}{% if field.flags.required %} <span aria-label="required">*</span>{% endif %}</label>{{ field }}{% if field.errors %}<ul class="errors">{% for error in field.errors %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}</div>{% endfor %}
+<div class="field checkbox-field full">{{ form.is_active() }}<label for="{{ form.is_active.id }}">{{ form.is_active.label.text }}</label></div>
+</div><p class="muted">Do not enter identity document numbers or other sensitive personal information.</p><div class="form-actions">{{ form.submit(class_='button') }}<a class="button secondary" href="{{ url_for('main.customer_list') }}">Cancel</a></div></form></section>
+{% endblock %}

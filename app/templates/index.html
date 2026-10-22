@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Dashboard · Car Rental Operations{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <div><p class="eyebrow">Operations overview</p><h1>Dashboard</h1><p class="muted">Current fleet status from your local records.</p></div>
+  <a class="button" href="{{ url_for('main.vehicle_create') }}">Add vehicle</a>
+</div>
+<section class="cards" aria-label="Fleet metrics">
+  <article class="card"><div class="metric">{{ metrics.total_vehicles }}</div><div class="metric-label">Registered vehicles, including archived</div></article>
+  <article class="card"><div class="metric">{{ metrics.available_vehicles }}</div><div class="metric-label">Available now</div></article>
+  <article class="card"><div class="metric">{{ metrics.maintenance_vehicles }}</div><div class="metric-label">Under maintenance</div></article>
+  <article class="card"><div class="metric">{{ metrics.company_vehicles }}</div><div class="metric-label">Company owned, active fleet</div></article>
+  <article class="card"><div class="metric">{{ metrics.partner_vehicles }}</div><div class="metric-label">Partner owned, active fleet</div></article>
+  <article class="card"><div class="metric">{{ metrics.active_partners }}</div><div class="metric-label">Active partners</div></article>
+  <article class="card"><div class="metric">{{ metrics.active_bookings }}</div><div class="metric-label">Current rentals</div></article>
+  <article class="card"><div class="metric">{{ metrics.upcoming_pickups }}</div><div class="metric-label">Pickups in the next 7 days</div></article>
+  <article class="card"><div class="metric">{{ metrics.overdue_returns }}</div><div class="metric-label">Overdue returns</div></article>
+  <article class="card"><div class="metric">₦{{ '{:,.2f}'.format(metrics.outstanding_customer_balance) }}</div><div class="metric-label">Outstanding customer balances</div></article>
+  <article class="card"><div class="metric">₦{{ '{:,.2f}'.format(metrics.outstanding_partner_settlements) }}</div><div class="metric-label">Outstanding partner settlements</div></article>
+</section>
+<section class="dashboard-layout">
+  <div class="panel">
+    <h2>Fleet operations</h2>
+    <p class="muted">Availability counts operational, unarchived vehicles without a current confirmed or active booking. Future booking conflicts are checked when confirming a reservation.</p>
+    <div class="actions"><a class="button secondary" href="{{ url_for('main.vehicle_list') }}">View fleet</a><a class="button secondary" href="{{ url_for('main.booking_list') }}">View bookings</a><a class="button secondary" href="{{ url_for('main.partner_list') }}">View partners</a><a class="button secondary" href="{{ url_for('main.reports') }}">Open reports</a></div>
+  </div>
+  <div class="panel">
+    <h2>Next steps</h2>
+    <p class="muted">Manage customer records and reserve fleet vehicles with an auditable agreed price.</p>
+    <a href="{{ url_for('main.booking_create') }}">Create a booking</a><br><a href="{{ url_for('main.customer_create') }}">Add a customer</a>
+  </div>
+</section>
+{% endblock %}

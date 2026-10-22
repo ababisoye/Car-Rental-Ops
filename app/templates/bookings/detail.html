@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}{{ booking.booking_reference }} · Car Rental Operations{% endblock %}
+{% block content %}
+<div class="page-heading"><div><p class="eyebrow">Booking record</p><h1>{{ booking.booking_reference }}</h1><p class="muted"><span class="badge {{ 'good' if booking.status == 'active' else 'warn' if booking.status == 'pending' }}">{{ booking.status|title }}</span></p></div><div class="actions"><a class="button secondary" href="{{ url_for('main.booking_list') }}">Back to bookings</a></div></div>
+<section class="panel"><h2>Reservation</h2><div class="details">
+<div><span class="detail-label">Customer</span><span class="detail-value"><a href="{{ url_for('main.customer_detail', customer_id=booking.customer.id) }}">{{ booking.customer.name }}</a></span></div>
+<div><span class="detail-label">Vehicle</span><span class="detail-value"><a href="{{ url_for('main.vehicle_detail', vehicle_id=booking.vehicle.id) }}">{{ booking.vehicle.make }} {{ booking.vehicle.model }} · {{ booking.vehicle.registration_number }}</a></span></div>
+<div><span class="detail-label">Scheduled pickup</span><span class="detail-value">{{ booking.pickup_at|localdatetime }} (Africa/Lagos)</span></div>
+<div><span class="detail-label">Scheduled return</span><span class="detail-value">{{ booking.return_at|localdatetime }} (Africa/Lagos)</span></div>
+<div><span class="detail-label">Actual pickup</span><span class="detail-value">{{ booking.actual_pickup_at|localdatetime }}{% if booking.actual_pickup_at %} (Africa/Lagos){% endif %}</span></div>
+<div><span class="detail-label">Actual return</span><span class="detail-value">{{ booking.actual_return_at|localdatetime }}{% if booking.actual_return_at %} (Africa/Lagos){% endif %}</span></div>
+<div><span class="detail-label">Agreed daily rate</span><span class="detail-value">₦{{ '{:,.2f}'.format(booking.agreed_daily_rate) }}</span></div>
+<div><span class="detail-label">Billable days</span><span class="detail-value">{{ booking.billable_days }}</span></div>
+<div><span class="detail-label">Additional charges</span><span class="detail-value">₦{{ '{:,.2f}'.format(booking.additional_charges) }}</span></div>
+<div><span class="detail-label">Discount</span><span class="detail-value">₦{{ '{:,.2f}'.format(booking.discount_amount) }}</span></div>
+<div><span class="detail-label">Expected rental total</span><span class="detail-value"><strong>₦{{ '{:,.2f}'.format(booking.expected_rental_total) }}</strong></span></div>
+<div><span class="detail-label">Partner agreement snapshot</span><span class="detail-value">{% if booking.partner_agreement_type_snapshot == 'fixed_per_rental' %}Fixed payout ₦{{ '{:,.2f}'.format(booking.partner_fixed_payout_snapshot) }} per rental{% elif booking.partner_agreement_type_snapshot == 'percentage' %}{{ '{:.2f}'.format(booking.partner_share_percentage_snapshot) }}% of {{ booking.partner_percentage_basis_snapshot|replace('_', ' ') }}{% else %}No agreement was effective at pickup time{% endif %}</span></div>
+{% if booking.partner_snapshot %}<div><span class="detail-label">Partner at booking</span><span class="detail-value"><a href="{{ url_for('main.partner_detail', partner_id=booking.partner_snapshot.id) }}">{{ booking.partner_snapshot.business_name or booking.partner_snapshot.name }}</a></span></div>{% endif %}
+{% if booking.notes %}<div class="field full"><span class="detail-label">Notes</span><span class="detail-value">{{ booking.notes }}</span></div>{% endif %}
+</div></section>
+<section class="panel"><h2>Customer transactions</h2><div class="details">
+<div><span class="detail-label">Payments recorded</span><span class="detail-value">₦{{ '{:,.2f}'.format(paid) }}</span></div>
+<div><span class="detail-label">Refunds recorded</span><span class="detail-value">₦{{ '{:,.2f}'.format(refunded) }}</span></div>
+<div><span class="detail-label">Outstanding customer balance</span><span class="detail-value"><strong>₦{{ '{:,.2f}'.format(balance) }}</strong></span></div>
+</div>
+{% if booking.payments %}<div class="table-wrap"><table><thead><tr><th>Type</th><th>Amount</th><th>Recorded method</th><th>Date</th><th>Reference / notes</th></tr></thead><tbody>{% for item in booking.payments %}<tr><td>{{ item.transaction_type|title }}</td><td>₦{{ '{:,.2f}'.format(item.amount) }}</td><td>{{ item.payment_method|replace('_', ' ')|title }}</td><td>{{ item.transacted_at|localdatetime }} (Africa/Lagos)</td><td>{{ item.reference or '—' }}{% if item.notes %}<br>{{ item.notes }}{% endif %}</td></tr>{% endfor %}</tbody></table></div>{% else %}<p class="muted">No payments or refunds recorded.</p>{% endif %}
+<h3>Record a payment or refund</h3><p class="muted">This records an internal transaction only. It does not contact a bank or payment processor. Entries are auditable and cannot be edited or deleted.</p>
+<form method="post" action="{{ url_for('main.booking_record_payment', booking_id=booking.id) }}" novalidate>{{ payment_form.hidden_tag() }}{% if payment_form.errors.get('csrf_token') %}<p class="flash error" role="alert">Form security check failed. Reload this page and try again.</p>{% endif %}<div class="form-grid">
+{% for field in [payment_form.transaction_type, payment_form.amount, payment_form.payment_method, payment_form.reference, payment_form.transacted_local, payment_form.notes] %}<div class="field {{ 'full' if field.name == 'notes' else '' }}"><label for="{{ field.id }}">{{ field.label.text }}{% if field.flags.required %} *{% endif %}</label>{% if field.name == 'transacted_local' %}{{ field(type='datetime-local') }}{% else %}{{ field }}{% endif %}{% if field.errors %}<ul class="errors">{% for error in field.errors %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}</div>{% endfor %}
+</div><div class="form-actions">{{ payment_form.submit(class_='button') }}</div></form>
+</section>
+{% if booking.status in ['pending', 'confirmed', 'active'] %}<section class="panel"><h2>Update booking status</h2><div class="actions">
+{% if booking.status == 'pending' %}<form method="post" action="{{ url_for('main.booking_confirm', booking_id=booking.id) }}">{{ confirm_form.hidden_tag() }}<button class="button" type="submit">Confirm and reserve vehicle</button></form>{% endif %}
+{% if booking.status == 'confirmed' and can_record_pickup %}<form method="post" action="{{ url_for('main.booking_pickup', booking_id=booking.id) }}" onsubmit="return confirm('Record pickup and start this rental?');">{{ confirm_form.hidden_tag() }}<button class="button" type="submit">Record pickup</button></form>{% elif booking.status == 'confirmed' %}<p class="muted">Pickup can only be recorded at or after the scheduled pickup time.</p>{% endif %}
+{% if booking.status == 'active' %}<form method="post" action="{{ url_for('main.booking_return', booking_id=booking.id) }}" onsubmit="return confirm('Record return and complete this rental?');">{{ confirm_form.hidden_tag() }}<button class="button" type="submit">Record return</button></form>{% endif %}
+{% if booking.status in ['pending', 'confirmed'] %}<form method="post" action="{{ url_for('main.booking_cancel', booking_id=booking.id) }}" onsubmit="return confirm('Cancel this booking? Its history will be preserved.');">{{ confirm_form.hidden_tag() }}<button class="button danger" type="submit">Cancel booking</button></form>{% endif %}
+</div><p class="muted">Status changes are recorded on this booking. Cancelling a reservation does not delete it.</p></section>{% endif %}
+{% if booking.partner_id_snapshot %}<section class="panel"><h2>Partner settlement</h2>
+{% if booking.settlement %}<p>A settlement has been created for this booking.</p><a class="button" href="{{ url_for('main.settlement_detail', settlement_id=booking.settlement.id) }}">Open settlement</a>
+{% elif booking.status == 'completed' and booking.partner_agreement_type_snapshot %}<p class="muted">Create a settlement using the agreement terms captured on this booking. Customer refunds recorded later will be added to its adjustment history.</p><form method="post" action="{{ url_for('main.settlement_create', booking_id=booking.id) }}">{{ confirm_form.hidden_tag() }}<button class="button" type="submit">Create partner settlement</button></form>
+{% elif booking.status == 'completed' %}<p class="muted">No partner agreement was captured for this booking. The system will not invent payout terms, so settlement creation is unavailable.</p>
+{% else %}<p class="muted">Settlement becomes available after this partner-owned rental is completed.</p>{% endif %}
+</section>{% endif %}
+{% endblock %}

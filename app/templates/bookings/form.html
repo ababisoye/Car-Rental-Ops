@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} · Car Rental Operations{% endblock %}
+{% block content %}
+<div class="page-heading"><div><p class="eyebrow">Reservation management</p><h1>{{ title }}</h1></div><a class="button secondary" href="{{ url_for('main.booking_list') }}">Back to bookings</a></div>
+<section class="panel"><form method="post" novalidate>{{ form.hidden_tag() }}{% if form.errors.get('csrf_token') %}<p class="flash error" role="alert">Form security check failed. Reload this page and try again.</p>{% endif %}<div class="form-grid">
+<div class="field"><label for="{{ form.customer_id.id }}">{{ form.customer_id.label.text }} *</label>{{ form.customer_id }}{% if form.customer_id.errors %}<ul class="errors">{% for error in form.customer_id.errors %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}<a href="{{ url_for('main.customer_create') }}">Add customer</a></div>
+<div class="field"><label for="{{ form.vehicle_id.id }}">{{ form.vehicle_id.label.text }} *</label>{{ form.vehicle_id }}{% if form.vehicle_id.errors %}<ul class="errors">{% for error in form.vehicle_id.errors %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}</div>
+{% for field in [form.pickup_local, form.return_local, form.agreed_daily_rate, form.additional_charges, form.discount_amount, form.initial_status, form.notes] %}<div class="field {{ 'full' if field.name == 'notes' else '' }}"><label for="{{ field.id }}">{{ field.label.text }}{% if field.flags.required %} *{% endif %}</label>{% if field.name in ['pickup_local', 'return_local'] %}{{ field(type='datetime-local') }}{% else %}{{ field }}{% endif %}{% if field.errors %}<ul class="errors">{% for error in field.errors %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}</div>{% endfor %}
+</div>
+<section class="panel"><h2>Payment confirmation</h2><p class="muted">A booking is created only after you confirm that a payment was received and verified. This records the amount in the customer transaction ledger; it does not process a payment. A deposit is allowed, and any remainder stays outstanding.</p>
+<div class="field">{{ form.payment_confirmed() }} <label for="{{ form.payment_confirmed.id }}">{{ form.payment_confirmed.label.text }} *</label>{% if form.payment_confirmed.errors %}<ul class="errors">{% for error in form.payment_confirmed.errors %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}</div>
+<div class="form-grid">{% for field in [form.initial_payment_amount, form.initial_payment_method, form.initial_payment_reference, form.initial_payment_local] %}<div class="field"><label for="{{ field.id }}">{{ field.label.text }} *</label>{% if field.name == 'initial_payment_local' %}{{ field(type='datetime-local') }}{% else %}{{ field }}{% endif %}{% if field.errors %}<ul class="errors">{% for error in field.errors %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}</div>{% endfor %}</div></section>
+<p class="muted">Rental periods are charged in 24-hour units, rounded up, with a one-day minimum. Expected total = (agreed daily rate × billable days) + additional charges − discount. Amounts use decimal arithmetic; no payment is processed here. Pickup must be in the future. A confirmed booking reserves the vehicle; pending bookings do not.</p>
+<div class="form-actions">{{ form.submit(class_='button') }}<a class="button secondary" href="{{ url_for('main.booking_list') }}">Cancel</a></div></form></section>
+<script>
+  const rateByVehicle = {{ vehicle_rates|tojson }};
+  const vehicleSelect = document.getElementById('{{ form.vehicle_id.id }}');
+  const rateInput = document.getElementById('{{ form.agreed_daily_rate.id }}');
+  vehicleSelect.addEventListener('change', () => { if (rateByVehicle[vehicleSelect.value]) rateInput.value = rateByVehicle[vehicleSelect.value]; });
+</script>
+{% endblock %}

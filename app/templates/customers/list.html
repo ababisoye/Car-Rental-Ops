@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% block title %}Customers · Car Rental Operations{% endblock %}
+{% block content %}
+<div class="page-heading"><div><p class="eyebrow">Customer management</p><h1>Customers</h1><p class="muted">Basic contact details and booking history.</p></div><a class="button" href="{{ url_for('main.customer_create') }}">Add customer</a></div>
+<section class="panel">{% if customers %}<div class="table-wrap"><table><thead><tr><th>Customer</th><th>Contact</th><th>Bookings</th><th>Status</th><th></th></tr></thead><tbody>{% for customer in customers %}<tr><td><a href="{{ url_for('main.customer_detail', customer_id=customer.id) }}"><strong>{{ customer.name }}</strong></a></td><td>{{ customer.email or '—' }}{% if customer.phone %}<br>{{ customer.phone }}{% endif %}</td><td>{{ customer.bookings|length }}</td><td><span class="badge {{ 'good' if customer.is_active else 'archived' }}">{{ 'Active' if customer.is_active else 'Archived' }}</span></td><td><a href="{{ url_for('main.customer_edit', customer_id=customer.id) }}">Edit</a></td></tr>{% endfor %}</tbody></table></div>{% else %}<div class="empty"><h2>No customers yet</h2><p>Add a customer before creating their first booking.</p><a class="button" href="{{ url_for('main.customer_create') }}">Add customer</a></div>{% endif %}</section>
+{% endblock %}
